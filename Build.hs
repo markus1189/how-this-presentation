@@ -4,23 +4,37 @@
 #! nix-shell --pure
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
+import           Control.Lens.Operators ((^.))
+import           System.Directory (createDirectoryIfMissing)
+import           Data.Foldable (for_)
 import           Control.Monad (unless)
 import           Data.List (intercalate, isPrefixOf)
 import           Data.List.Split (chunksOf)
 import           Data.Maybe (mapMaybe)
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import           Data.Traversable (for)
 import           Development.Shake
 import           Development.Shake.Classes
 import           Development.Shake.FilePath
+import qualified Dhall as D
+import qualified Data.ByteString.Lazy as BL
+import           Control.Monad.IO.Class (MonadIO)
+import qualified Network.Wreq as Wreq
 import qualified System.IO as IO
 import           Text.LaTeX
+import qualified Data.Text as TS
 import           Text.LaTeX.Base.Parser
 import           Text.LaTeX.Base.Syntax
+
+data ImageSrc = ImageSrc { url :: Text, transformations :: [Text] } deriving (Show, D.Generic)
+instance D.Interpret ImageSrc
 
 newtype ScalaOptions = ScalaOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
 type instance RuleResult ScalaOptions = [String]
@@ -46,11 +60,12 @@ myShakeOptions = shakeOptions { shakeLint = Just LintBasic
 
 runShakeBuild :: IO ()
 runShakeBuild = shakeArgs myShakeOptions $ do
+  downloadResource <- addResource
   addOracles
   projectCompiler <- addProjectCompiler
   wantTargets
   phonyCommands
-  rules projectCompiler
+  rules projectCompiler downloadResource
 
 wantTargets :: Rules ()
 wantTargets = do
@@ -59,6 +74,9 @@ wantTargets = do
 phonyCommands :: Rules ()
 phonyCommands = do
   phony "clean" (removeFilesAfter buildDir ["//*"])
+
+addResource :: Rules Resource
+addResource = newResource "Download" 10
 
 addOracles :: Rules ()
 addOracles = do
@@ -84,10 +102,12 @@ addOracles = do
 
 addProjectCompiler :: Rules (() -> Action ())
 addProjectCompiler = do
-  newCache $ \() -> cmd [Cwd "source-code"] "sbt" ["compile"]
+  newCache $ \() -> cmd_ [Cwd "source-code"] bin args
+  where bin = "sbt" :: String
+        args = ["compile"] :: [String]
 
-rules :: (() -> Action ()) -> Rules ()
-rules projectCompiler = do
+rules :: (() -> Action ()) -> Resource -> Rules ()
+rules projectCompiler downloadResource = do
   buildDir </> "slides.pdf" %> \out -> do
     let inp = out -<.> "tex"
         theme = map (buildDir </>) ["beamercolorthemecodecentric.sty"
@@ -125,6 +145,13 @@ rules projectCompiler = do
   buildDir </> "static-images/*" %> \out -> do
     let inp = dropDirectory1 out
     copyFileChanged inp out
+
+  [ buildDir </> "images/*" <.> ext | ext <- [ "jpg", "png", "gif" ] ] |%> \out -> do
+    let inp = dropDirectory1 $ out -<.> "src"
+    need [inp]
+    ImageSrc uri ts <- traced "image-src" (readImageSrc inp)
+    download downloadResource (TS.unpack uri) out
+    for_ ts $ unit . applyTransformation out
 
 ditaa :: FilePath -> FilePath -> Action ()
 ditaa inp outp = do
@@ -214,3 +241,16 @@ extractSnippet file = do
     if null result
       then error ("Empty snippet for:\n" <> file <> ":0:")
       else return (unlines (drop 1 result))
+
+download :: Resource -> String -> FilePath -> Action ()
+download res uri target = withResource res 1 $ traced "download" $ do
+  createDirectoryIfMissing True (takeDirectory target)
+  r <- Wreq.get uri
+  BL.writeFile target (r ^. Wreq.responseBody)
+
+readImageSrc :: MonadIO io => String -> io ImageSrc
+readImageSrc p = liftIO $ D.input D.auto ("./" <> TL.pack p)
+
+applyTransformation :: String -> Text -> Action ()
+applyTransformation out t = cmd bin (words (TS.unpack t) ++ [out, out])
+  where bin = "convert" :: String
