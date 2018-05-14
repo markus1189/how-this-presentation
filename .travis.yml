@@ -1,0 +1,17 @@
+language:
+  - nix
+
+script:
+  - "./Build.hs"
+
+env:
+  secure: "nXiH+yr98n5wKopbV2dVZbti6TZMcA63nDqMTh5JFe9f6oXfLQ5vNJ4IYnv7SrltmSODBclxA5egAgMNEGGjXZN8j2kJIzzpM+BIxNI0W5g5Vinnbo47H4bzAsoTBD/5v8LjvbuXrq8saN932r0G7/3pGoortnuIrk/RgPaCg7ZKzipX3Tm4ipjqPKlY+3pChZ3VJ/mEFr7MtKlZYZVABmYQD2yO/2zT/WVHy/SkB0MVIINk07bZFcJRxfKUUwbcWSH6+STvIfMfPfTvu4BqdQW1mm76IeK3FJuCD96Oq/vCyQiFL5FPK8zfRU2ZcixbBIQLSdYKanO0G/Uy2x44ch2hbCFRvhTUO4RzMNVs3+EzuLyfjtX1uzTUV4kHQ6okvdZaBtV8DSfw+FIenHuVltkf83Sp7sgEODnk1HTG8YhEEnCNQTAHezmHqt1YfqZxf8KkJIi7YVFuoLDlD+bhpgNQsnvAz8Gc0JOFWLlSAiKyPVeavPidchJ31WsubN8ciYmkmYWscizsvyMN3wLEn5OOK+YBqq+wKOCxiiHrxXwU4HhDxGaOEMDgWUZR/SZGiJNGftOMm1Mm8iH8jga+XbYBp1OJpVQpVSOK8i1Ed7E/V1grjhY3m+eZDbyoLkBE35ywSBtmbACw5yEkN0WZwm5Q0VK7SxQBYSLMLOt6ZF8="
+
+after_success:
+  - git config --global user.email "travis-ci@travis.org"
+  - git config --global user.name "Travis CI"
+  - git checkout -b pdf
+  - git add -f result/slides.pdf
+  - git commit -m "$(date --iso-8601) @ $(git rev-list --max-count=1 --abbrev-commit $TRAVIS_BRANCH)" -m "[skip ci]"
+  - git tag -f -a -m "Compilation on $(date --iso-8601) of commit $(git rev-list --max-count=1 --abbrev-commit $TRAVIS_BRANCH)" "pdf-$TRAVIS_BRANCH-$(git rev-list --max-count=1 --abbrev-commit $TRAVIS_BRANCH)"
+  - git push --tags -f https://markus1189:$GITHUB_API_KEY@github.com/markus1189/free-all-the-things pdf

@@ -1,0 +1,8 @@
+auto/
+/missfont.log
+/report.html
+/report.json
+result/
+/_region_.tex
+/cc-font.nix
+.shake/

@@ -1,0 +1,27 @@
+\defbeamertemplate*{footline}{}
+{
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.31\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor\expandafter\beamer@ifempty\expandafter{\beamer@shortinstitute}{}{~~(\insertshortinstitute)}
+  \end{beamercolorbox}%
+  \hfill
+    \begin{beamercolorbox}[wd=.31\paperwidth,ht=2.25ex,dp=-2ex,center]{date in head/foot}%
+    \includegraphics[height=2.1mm]{../static-images/cc-logo.png}
+  \end{beamercolorbox}%
+  \hspace{2ex}
+  \hfill
+  \begin{beamercolorbox}[wd=.32\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle{}
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.06\paperwidth,ht=2.25ex,dp=1ex,left]{date in head/foot}%
+    \insertframenumber{}\hspace{2ex}
+  \end{beamercolorbox}
+  }%
+  \vskip0pt%
+}
+
+\setbeamertemplate{navigation symbols}{}
+
+\mode%
+<all>
