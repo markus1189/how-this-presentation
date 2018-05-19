@@ -53,7 +53,7 @@ let
     xstring
     ;
   };
-  pyPackages = with pythonPackages; [ pygments ];
+  pyPackages = with pythonPackages; [ pygments pillow ];
 in
   runCommand "slides-build-input" {
     FONTCONFIG_FILE = makeFontsConf { fontDirectories = [ google-fonts ubuntu_font_family ] ++ (if useCodecentricFont then [codecentricFont] else []); };
@@ -61,6 +61,7 @@ in
     buildInputs = [
       coreutils
       ditaa
+      fontconfig
       eject
       ghcPackages
       graphviz

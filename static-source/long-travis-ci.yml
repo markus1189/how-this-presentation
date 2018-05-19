@@ -1,0 +1,115 @@
+sudo: required
+
+language: haskell
+
+cache:
+  directories:
+  - ~/.stack
+
+branches:
+  except:
+    - pdf
+
+before_install:
+  - wget -q -O- http://download.fpcomplete.com/ubuntu/fpco.key | sudo apt-key add -
+  - echo 'deb http://download.fpcomplete.com/ubuntu/precise stable main' | sudo tee /etc/apt/sources.list.d/fpco.list
+  - sudo apt-get update
+
+  - sudo apt-get install -qq -y stack
+  - stack --version
+
+  - sudo apt-get install -qq -y texlive-base texlive-fonts-recommended texlive-latex-extra texlive-latex-recommended texlive-math-extra texlive-fonts-extra python-pygments cm-super cm-super-x11 imagemagick
+  - latex --version
+
+  - sudo apt-get install -qq -y python-pip
+  - pip --version
+
+  - wget 'http://downloads.typesafe.com/scala/2.11.7/scala-2.11.7.tgz' && tar xzf scala-2.11.7.tgz && export PATH="$(pwd)/scala-2.11.7/bin:$PATH"
+  - scala -version
+
+  - sudo apt-get install -qq -y fort77 libblas3gf libblas-doc libblas-dev liblapack3gf liblapack-doc liblapack-dev
+  - sudo apt-get build-dep -qq -y r-base r-base-dev
+
+  # May result in error during R ./configure
+  # checking whether mixed C/Fortran code can be run... configure: WARNING: cannot run mixed C/Fortran code
+  # configure: error: Maybe check LDFLAGS for paths to Fortran libraries?
+  - sudo mv /usr/lib/libf2c.so /usr/lib/libf2c.so_backup
+  - sudo ln -s /usr/lib/libf2c.a /usr/lib/libf2c.so
+
+  - wget 'https://cran.r-project.org/src/base/R-3/R-3.1.3.tar.gz' && tar xzf R-3.1.3.tar.gz
+  - (cd R-3.1.3 && ./configure --with-blas --with-lapack --prefix=/usr/local && make)
+  - export PATH="$(pwd)/R-3.1.3/bin:$PATH"
+  - R --version
+  - R --slave --no-save -f R/install-packages.R
+
+  - sudo pip install --upgrade pygments
+  - pygmentize -V
+
+install:
+  - mkdir -p "$HOME/texmf/tex/latex"
+  - (cd "$HOME/texmf/tex/latex" && wget -O lineno.zip "http://mirrors.ctan.org/macros/latex/contrib/lineno.zip" && unzip lineno.zip)
+  - texhash "$HOME/texmf"
+  - (cd "$HOME/texmf/tex/latex" && wget -O minted.zip "http://mirrors.ctan.org/macros/latex/contrib/minted.zip" && unzip minted.zip && latex -shell-escape -interaction nonstopmode minted.ins)
+
+  # setup $HOME/bin
+  - mkdir -p "$HOME/bin"
+  - export PATH="$HOME/bin:$PATH"
+
+  # install latexmk
+  - (mkdir -p "install-latexmk" &&
+     cd "install-latexmk" &&
+     wget -O latexmk.zip "http://mirrors.ctan.org/support/latexmk.zip" &&
+     unzip latexmk.zip &&
+     cp latexmk/latexmk.pl "$HOME/bin/latexmk" &&
+     chmod +x "$HOME/bin/latexmk")
+  -  latexmk -version
+
+  # install custom design and fonts
+  - wget -O some-design.zip 'http://some-custom-design_1.0.20140928.zip'
+  - unzip some-design -d "$HOME/"
+  - wget -O some-other-design.zip 'http://some-other-custom-design_0.0.20140703.zip'
+  - unzip some-other-design.zip -d "$HOME/"
+  - unzip some-fonts.zip -d "$HOME/"
+
+  - (wget -O excludeonly.zip "http://mirrors.ctan.org/macros/latex/contrib/excludeonly.zip" && unzip excludeonly.zip -d "$HOME/texmf/tex/latex")
+  - (wget -O cleveref.zip "http://mirrors.ctan.org/macros/latex/contrib/cleveref.zip" && unzip cleveref.zip -d "$HOME/texmf/tex/latex")
+  - (wget -O microtype.zip "http://mirrors.ctan.org/macros/latex/contrib/microtype.zip" && unzip microtype.zip -d "$HOME/texmf/tex/latex/")
+
+  - mkdir -p "$HOME/.texmf-var"
+  - mkdir -p "$HOME/.texmf-config/updmap.d"
+
+  - mv -v "$HOME/texmf/updmap.d" "$HOME/.texmf-config/"
+  - cat "$HOME/.texmf-config/updmap.d/20tex-fonts.cfg"
+  - sed -i -e '/DebPkgProvided/d' "$HOME/.texmf-config/updmap.d/20tex-fonts.cfg"
+  - texhash "$HOME/texmf"
+
+  - update-updmap || echo update-updmap failed
+  - updmap || echo updmap failed
+
+  # Diagnosis
+  - updmap --listmaps
+  - updmap --listmaps | egrep "^Map[[:blank:]]*5" || echo nop
+  - kpsewhich --all updmap.cfg
+
+  - stack setup
+  - stack build hlint
+
+script:
+  - stack build
+  - stack exec thesis
+
+after_failure:
+  - ls -1lhA
+  - cat thesis.log
+  - cat thesis.blg
+  - cat presentation/final/final.log
+
+after_success:
+  - git config --global user.email "travis-ci@travis.org"
+  - git config --global user.name "Travis CI"
+  - git checkout -b pdf
+  - git add -f thesis.pdf
+  - git add -f presentation/final/final.pdf
+  - git commit -m "$(date --iso-8601) @ $(git rev-list --max-count=1 --abbrev-commit $TRAVIS_BRANCH)" -m "[skip ci]"
+  - git tag -f -a -m "Compilation on $(date --iso-8601) of commit $(git rev-list --max-count=1 --abbrev-commit $TRAVIS_BRANCH)" "pdf-$TRAVIS_BRANCH-$(git rev-list --max-count=1 --abbrev-commit $TRAVIS_BRANCH)"
+  - git push --tags -f origin pdf

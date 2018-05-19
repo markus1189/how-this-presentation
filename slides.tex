@@ -19,7 +19,7 @@
 % Minted configuration for source code highlighting
 \usepackage{minted}
 \setminted{highlightcolor=black!5, linenos}
-\setminted{style=lovelace}
+\setminted{style=perldoc}
 
 \usepackage[listings, minted]{tcolorbox}
 \tcbset{left=6mm}
@@ -50,11 +50,54 @@
 \section{Introduction}\label{sec:introduction}
 
 \begin{frame}
-  \frametitle{How I Write Presentations}
+  \frametitle{How It All Started}
   \begin{itemize}
-  \item Most of the time: LaTeX Beamer
-  \item very nice pdf slides
-  \item you can use LaTeX packages
+  \item Me writing presentation be like:
+  \item fighting graphical editor more than focused on content
+  \item logical step: switch to something that is text based
+  \item reveal.js + markdown, pandoc, LaTeX
+  \item good: version control
+  \item still bad: generated pictures
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Writing Presentation}
+  \begin{itemize}
+  \item quick and dirty: google slides, powerpoint, keynote
+  \item can't use version control like git
+  \item paste pictures
+  \item want to change something? awful
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{This Talk}
+  \begin{itemize}
+  \item apply cool stuff?
+  \item goal: declarative presentation
+  \item and fun of course
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Used Tools}
+  \begin{itemize}
+  \item Nix for system dependencies + build env
+  \item Shake to write a custom build system
+  \item Dhall for easy configuration
+  \item LaTeX for slides
+  \item ditaa, graphviz
+  \item more...
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Presentation As Code}
+  \begin{itemize}
+  \item reproducible: same description for CI and local machine
+  \item single step: one command that smartly figures out what to do
+  \item fully declarative: generate from description
   \end{itemize}
 \end{frame}
 
@@ -71,12 +114,76 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Shake}
+  \begin{itemize}
+  \item \url{shakebuild.com/manual}
+  \item Shake is a Haskell \textbf{library} for writing build systems
+  \item \texttt{Shake} vs \texttt{make} is like \texttt{Monad} vs \texttt{Applicative}
+  \item integrates with other libraries and system tools
+  \item the backbone of our presentation building machinery
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Shake Rules}
+  \begin{minted}{haskell}
+--  +---------------- file pattern to match
+--  |
+--  |       +-------- target path to create
+--  |       |
+--  v       v
+pattern %> \out -> do
+  action1          -- <--\
+  action2          -- <---+- Actions to create out
+  action3          -- <--/
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Shake Rules}
+  \begin{minted}{haskell}
+"*.txt" %> \out -> do
+  putNormal "Debug"
+  cmd "touch" [out]
+  \end{minted}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Continuous Integration via Travis}
+  \inputminted[linenos=false, fontsize=\tiny, lastline=31]{yaml}{static-source/long-travis-ci.yml}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Continuous Integration via Travis}
+  \inputminted[linenos=false, fontsize=\tiny, firstline=31, lastline=60]{yaml}{static-source/long-travis-ci.yml}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Continuous Integration via Travis}
+  \inputminted[linenos=false, fontsize=\tiny, firstline=61, lastline=90]{yaml}{static-source/long-travis-ci.yml}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Continuous Integration via Travis}
+  \inputminted[linenos=false, fontsize=\tiny, firstline=91, lastline=120]{yaml}{static-source/long-travis-ci.yml}
+\end{frame}
+
+\begin{frame}
   \frametitle{Presentations}
   \begin{itemize}
   \item having CI would be nice :thinking:
   \item just check out my github and build it
   \item 100 lines of .travis.yml, specific to Ubuntu
   \item good luck with that!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{What This Talk Is About}
+  \begin{itemize}
+  \item applying languages and FP to presentations
+  \item showing Nix(OS) and Haskell: Shake, Dhall, ...
+  \item declarative presentations as a bonus
   \end{itemize}
 \end{frame}
 
@@ -193,6 +300,11 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Downloading Pictures}
+  \includegraphics{images/maintain-make.jpg}
+\end{frame}
+
+\begin{frame}
   \frametitle{Generating Pictures}
   \begin{itemize}
   \item common scenario: picture is generated
@@ -208,6 +320,24 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Dhall For Configuration?}
+  \begin{itemize}
+  \item what is Dhall
+  \item why Dhall
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generating Pictures}
+  \begin{itemize}
+  \item the description: Dhall
+  \item check if already downloaded
+  \item download
+  \item apply imagemagick transformation
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
   \frametitle{The One Command Lie}
   \begin{itemize}
   \item you just have to run this \textbf{one} command
@@ -216,8 +346,6 @@
   \item perfect: use it in .travis.yml as well as every pc
   \end{itemize}
 \end{frame}
-
-
 
 \section{Conclusion}\label{sec:conclusion}
 

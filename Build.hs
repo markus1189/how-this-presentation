@@ -146,6 +146,16 @@ rules projectCompiler downloadResource = do
     let inp = dropDirectory1 out
     copyFileChanged inp out
 
+  alternatives $ do
+    buildDir </> "static-source/*.png" %> \out -> do
+      let inp = dropExtension (dropDirectory1 out)
+      need [inp]
+      cmd [Stdin ""] ("pygmentize" :: String) ["-Ofont_name=Ubuntu Mono", "-o", out, inp]
+
+    buildDir </> "static-source/*" %> \out -> do
+      let inp = dropDirectory1 out
+      copyFileChanged inp out
+
   [ buildDir </> "images/*" <.> ext | ext <- [ "jpg", "png", "gif" ] ] |%> \out -> do
     let inp = dropDirectory1 $ out -<.> "src"
     need [inp]
@@ -219,7 +229,7 @@ graphicDeps file = map (buildDir </>) <$> commandDeps ["includegraphics"] file
 
 codeDeps :: FilePath -> Action [FilePath]
 codeDeps file = do
-  deps <- map (buildDir </>) . filter (/= "scala") <$> commandDeps ["inputminted"] file
+  deps <- map (buildDir </>) . filter (not . (`elem` ["scala", "yaml"])) <$> commandDeps ["inputminted"] file
   putQuiet ("Discovered dependencies for '" <> file <> "': " <> show deps)
   return deps
 
@@ -252,5 +262,5 @@ readImageSrc :: MonadIO io => String -> io ImageSrc
 readImageSrc p = liftIO $ D.input D.auto ("./" <> TL.pack p)
 
 applyTransformation :: String -> Text -> Action ()
-applyTransformation out t = cmd bin (words (TS.unpack t) ++ [out, out])
+applyTransformation out t = cmd [Stdin ""] bin (words (TS.unpack t) ++ [out, out])
   where bin = "convert" :: String
