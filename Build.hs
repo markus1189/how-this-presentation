@@ -33,6 +33,9 @@ import qualified Data.Text as TS
 import           Text.LaTeX.Base.Parser
 import           Text.LaTeX.Base.Syntax
 
+cmdOpts :: [CmdOption]
+cmdOpts = [WithStdout True, EchoStdout False, EchoStderr False, Stdin ""]
+
 data ImageSrc = ImageSrc { url :: Text, transformations :: [Text] } deriving (Show, D.Generic)
 instance D.Interpret ImageSrc
 
@@ -95,7 +98,7 @@ addOracles = do
                                                   ,"maxColumn = 55"
                                                   ]
   _ <- addOracle $ \(DitaaOptions _) -> return ["--scale"
-                                               ,"3"
+                                               ,"4"
                                                ,"--overwrite"
                                                ]
   return ()
@@ -140,6 +143,7 @@ rules projectCompiler downloadResource = do
 
   buildDir </> "ditaa/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "ditaa"
+    need [inp]
     ditaa inp out
 
   buildDir </> "static-images/*" %> \out -> do
@@ -166,17 +170,14 @@ rules projectCompiler downloadResource = do
 ditaa :: FilePath -> FilePath -> Action ()
 ditaa inp outp = do
   opts <- askOracle (DitaaOptions ())
-  cmd bin ([inp, outp] ++ opts)
+  cmd cmdOpts bin ([inp, outp] ++ opts)
   where bin = "ditaa" :: String
 
 latexmk :: FilePath -> Action ()
 latexmk inp = do
-  cmd [Cwd (takeDirectory inp)
-      ,WithStdout True
-      ,EchoStdout False
-      ,EchoStderr False
-      ,Stdin ""
-      ] bin ["-g", "-shell-escape", "-pdfxe", dropDirectory1 inp]
+  cmd (Cwd (takeDirectory inp) : cmdOpts)
+      bin
+      ["-g", "-shell-escape", "-pdfxe", dropDirectory1 inp]
   where bin = "latexmk" :: String
 
 checkScala :: FilePath -> Action ()
