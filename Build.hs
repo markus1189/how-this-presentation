@@ -274,11 +274,7 @@ graphicDeps :: FilePath -> Action [FilePath]
 graphicDeps file = map ((buildDir </>) . concat) <$> commandDeps ["includegraphics"] file
 
 codeDeps :: FilePath -> Action [FilePath]
-codeDeps file = do
-  d <- commandDeps ["inputminted"] file
-  putNormal (show d)
-  deps <- map (buildDir </>) . concatMap (drop 1) <$> commandDeps ["inputminted"] file
-  return deps
+codeDeps file = map (buildDir </>) . concatMap (drop 1) <$> commandDeps ["inputminted"] file
 
 extractSnippet :: FilePath -> Action String
 extractSnippet file = do
