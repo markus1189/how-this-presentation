@@ -131,14 +131,19 @@ beamerThemes = map (buildDir </>) ["beamercolorthemecodecentric.sty"
                                   ,"beamerthemecodecentric.sty"
                                   ]
 
+createByCopy :: FilePath -> Rules ()
+createByCopy ptrn = buildDir </> ptrn %> \out -> copyFileChanged (dropDirectory1 out) out
+
 rules :: (() -> Action ()) -> Resource -> Rules ()
 rules projectCompiler downloadResource = do
+  --snippet:outer pdf rule
   --snippet:pdf rule
   buildDir </> "slides.pdf" %> \out -> do
     let inp = out -<.> "tex"
     need (inp : includedFont : beamerThemes)
     latexmk inp
   --end:pdf rule
+  --end:outer pdf rule
 
   buildDir </> "font.tex" %> \_ -> dumpFontFile
 
@@ -149,8 +154,7 @@ rules projectCompiler downloadResource = do
     need (inp : needsCode ++ needsGraphics)
     liftIO (copyFile inp out)
 
-  buildDir </> "*.sty" %> \out -> do
-    copyFileChanged (dropDirectory1 out) out
+  createByCopy "*.sty"
 
   buildDir </> "snippets" </> "*.scala" %> \out -> do
     _ <- projectCompiler ()
@@ -163,6 +167,8 @@ rules projectCompiler downloadResource = do
     snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
     writeFileChanged out snip
     hindent out
+
+  createByCopy ("snippets" </> "*.snippet")
 
   buildDir </> "ditaa/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "ditaa"
@@ -252,25 +258,26 @@ cmdArgs :: TeXArg -> Maybe Text
 cmdArgs (FixArg (TeXRaw arg)) = Just arg
 cmdArgs _ = Nothing
 
-commandDeps :: [String] -> FilePath -> Action [FilePath]
+commandDeps :: [String] -> FilePath -> Action [[FilePath]]
 commandDeps cmds file = do
   etex <- liftIO (parseLaTeXFile file)
   case etex of
     Left err -> error ("Parsing of file " <> file <> " failed: " <> show err)
     Right t -> do
-      let result = map T.unpack .
-                   mapMaybe cmdArgs .
-                   concatMap snd .
+      let result = map (map T.unpack . mapMaybe cmdArgs) .
+                   map snd .
                    matchCommand (`elem` cmds) $
                    t
       return result
 
 graphicDeps :: FilePath -> Action [FilePath]
-graphicDeps file = map (buildDir </>) <$> commandDeps ["includegraphics"] file
+graphicDeps file = map ((buildDir </>) . concat) <$> commandDeps ["includegraphics"] file
 
 codeDeps :: FilePath -> Action [FilePath]
 codeDeps file = do
-  deps <- map (buildDir </>) . filter (not . (`elem` ["scala", "yaml", "haskell"])) <$> commandDeps ["inputminted"] file
+  d <- commandDeps ["inputminted"] file
+  putNormal (show d)
+  deps <- map (buildDir </>) . concatMap (drop 1) <$> commandDeps ["inputminted"] file
   return deps
 
 extractSnippet :: FilePath -> Action String

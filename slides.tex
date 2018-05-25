@@ -262,15 +262,28 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \frametitle{Annotating Code for Snippets}
-  % \inputminted[autogobble]{haskell}{snippets/outer-pdf-rule.hs}
+  \frametitle{Annotating Code for Snippets (META)}
+  \inputminted[autogobble]{haskell}{snippets/outer-pdf-rule.hs}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet File}
+  \inputminted{text}{snippets/pdf-rule.snippet}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Extracting Code}
+  \begin{itemize}
+  \item don't want to litter your source?
+  \item as long as search pattern is unique, no problem
+  \item will always be up to date with the compiling source
+  \item but we also have to format and maybe check again
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
   \frametitle{Editing Code}
   \begin{itemize}
-  \item okay that gets rid of the copy + pasting
-  \item what about formatting and checking?
   \item let's tackle checking first
   \item lots of times: broken code snippets that never compile
   \item mostly hand waving examples
