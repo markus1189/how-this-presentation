@@ -59,11 +59,11 @@
 \begin{frame}
   \frametitle{Presentations: But How}
   \begin{itemize}
-  \item<1-> powerpoint/keynote/google slides/\ldots{}
-  \item<2-> but you can't use \texttt{git} :(
-  \item<3-> requirement: some markup language-ish thing
-  \item<4-> e.g. pandoc / LaTeX
-  \item<5-> text handled, what about pictures/code/etc?
+  \item powerpoint/keynote/google slides/\ldots{}
+  \item but you can't use \texttt{git} :(
+  \item requirement: some markup language-ish thing
+  \item e.g., pandoc / LaTeX
+  \item text handled, what about pictures/code/etc?
   \end{itemize}
 \end{frame}
 
@@ -73,9 +73,8 @@
   \item Me writing presentation be like:
   \item fighting graphical editor more than focused on content
   \item logical step: switch to something that is text based
-  \item reveal.js + markdown, pandoc, LaTeX
-  \item good: version control
-  \item still bad: generated pictures
+  \item how to handle generated pictures
+  \item how to handle code
   \end{itemize}
 \end{frame}
 
@@ -86,15 +85,6 @@
   \item can't use version control like git
   \item paste pictures
   \item want to change something? awful
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{This Talk}
-  \begin{itemize}
-  \item apply cool stuff?
-  \item goal: declarative presentation
-  \item and fun of course
   \end{itemize}
 \end{frame}
 
@@ -111,11 +101,11 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Presentation As Code}
+  \frametitle{Presentations}
   \begin{itemize}
-  \item reproducible: same description for CI and local machine
-  \item single step: one command that smartly figures out what to do
-  \item fully declarative: generate from description
+  \item having CI would be nice :thinking:
+  \item ``just'' check out from github and build it?
+  \item good luck with that!
   \end{itemize}
 \end{frame}
 
@@ -129,41 +119,6 @@
   \item notice missing python package (pygments), install it
   \item lots of trial and error \texttt{:(}
   \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Shake}
-  \begin{itemize}
-  \item \url{shakebuild.com/manual}
-  \item Shake is a Haskell \textbf{library} for writing build systems
-  \item \texttt{Shake} vs \texttt{make} is like \texttt{Monad} vs \texttt{Applicative}
-  \item integrates with other libraries and system tools
-  \item the backbone of our presentation building machinery
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Shake Rules}
-  \begin{minted}{haskell}
---  +---------------- file pattern to match
---  |
---  |       +-------- target path to create
---  |       |
---  v       v
-pattern %> \out -> do
-  action1          -- <--\
-  action2          -- <---+- Actions to create out
-  action3          -- <--/
-  \end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Shake Rules}
-  \begin{minted}{haskell}
-"*.txt" %> \out -> do
-  putNormal "Debug"
-  cmd "touch" [out]
-  \end{minted}
 \end{frame}
 
 \begin{frame}
@@ -187,29 +142,12 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \frametitle{Presentations}
+  \frametitle{Presentation As Code}
   \begin{itemize}
-  \item having CI would be nice :thinking:
-  \item just check out my github and build it
-  \item 100 lines of .travis.yml, specific to Ubuntu
-  \item good luck with that!
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{What This Talk Is About}
-  \begin{itemize}
-  \item applying languages and FP to presentations
-  \item showing Nix(OS) and Haskell: Shake, Dhall, ...
-  \item declarative presentations as a bonus
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Preview}
-  \begin{itemize}
-  \item look at common scenarios
-  \item present a solution
+  \item reproducible: same description for CI and local machine
+  \item single step: one command
+  \item declarative: generate from description
+  \item checked: source code compiles
   \end{itemize}
 \end{frame}
 
@@ -220,9 +158,67 @@ pattern %> \out -> do
   \item Scenario 1: Dependencies
   \item Scenario 2a: Editing Code
   \item Scenario 2b: Checking Snippets
-  \item Scenario 3: Editing Pictures
+  \item Scenario 3: Generated Pictures
   \item Scenario 4: Continuous Integration
   \end{itemize}
+\end{frame}
+
+\section{Shake}
+
+\begin{frame}
+  \frametitle{Shake}
+  \begin{itemize}
+  \item \url{shakebuild.com/manual}
+  \item Shake is a Haskell \textbf{library} for writing build systems
+  \item \texttt{Shake} vs \texttt{make} is like \texttt{Monad} vs \texttt{Applicative}
+  \item integrates well with other libraries and system tools
+  \item the backbone of this presentation
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Shake}
+  \begin{itemize}
+  \item specify rules to create output from some input
+  \item avoid rebuilds of unchanged things
+  \item ``just'' a library, rest is up to you
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Shake Rules}
+  \begin{minted}{haskell}
+--  +---------------- file pattern to match
+--  |
+--  |       +-------- target path to create
+--  |       |
+--  v       v
+pattern %> \out -> do
+  action1          -- <--\
+  action2          -- <---+- Actions to build 'out'
+  action3          -- <--/
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Shake Rules}
+  \begin{minted}{haskell}
+"*.txt" %> \out -> do
+  putNormal "Debug"
+  cmd "touch" [out]
+  \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Shake Rules}
+  \inputminted[autogobble]{haskell}{snippets/pdf-rule.hs}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Shake Rules}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{graphviz/rules.png}
+  \end{center}
 \end{frame}
 
 \begin{frame}
@@ -237,10 +233,18 @@ pattern %> \out -> do
   \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+  \frametitle{Extract Code}
+  \begin{itemize}
+  \item common: extract based on lines
+  \item after edit / formatting / \ldots they change
+  \item not what we want
+  \end{itemize}
+\end{frame}
+
 \begin{frame}
   \frametitle{Editing Code}
   \begin{itemize}
-  \item we need a better way
   \item idea: extract source code directly from actual project
   \item use comments to delimit ``snippets''
   \item write code to extract everything in between
@@ -255,6 +259,11 @@ pattern %> \out -> do
   \item let shake automatically extract snippets
   \item include code snippets in presentation
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Annotating Code for Snippets}
+  % \inputminted[autogobble]{haskell}{snippets/outer-pdf-rule.hs}
 \end{frame}
 
 \begin{frame}

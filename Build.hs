@@ -6,20 +6,18 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Main where
 
 import           Control.Lens.Operators ((^.))
-import           System.Directory (createDirectoryIfMissing)
+import           System.Directory (createDirectoryIfMissing, copyFile)
 import           Data.Foldable (for_)
-import           Control.Monad (unless)
-import           Data.List (intercalate, isPrefixOf)
-import           Data.List.Split (chunksOf)
+import           Data.List (isPrefixOf)
 import           Data.Maybe (mapMaybe)
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
-import           Data.Traversable (for)
 import           Development.Shake
 import           Development.Shake.Classes
 import           Development.Shake.FilePath
@@ -39,14 +37,23 @@ cmdOpts = [WithStdout True, EchoStdout False, EchoStderr False, Stdin ""]
 data ImageSrc = ImageSrc { url :: Text, transformations :: [Text] } deriving (Show, D.Generic)
 instance D.Interpret ImageSrc
 
+data SnippetSrc = SnippetSrc { snippetFile :: Text, snippetStart :: Text, snippetEnd :: Text } deriving (Show, D.Generic)
+instance D.Interpret SnippetSrc
+
 newtype ScalaOptions = ScalaOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
 type instance RuleResult ScalaOptions = [String]
 
 newtype ScalafmtOptions = ScalafmtOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
 type instance RuleResult ScalafmtOptions = [String]
 
+newtype HindentOptions = HindentOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
+type instance RuleResult HindentOptions = [String]
+
 newtype DitaaOptions = DitaaOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
 type instance RuleResult DitaaOptions = [String]
+
+newtype GraphvizOptions = GraphvizOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
+type instance RuleResult GraphvizOptions = [String]
 
 main :: IO ()
 main = runShakeBuild
@@ -97,10 +104,14 @@ addOracles = do
                                                   ,"--config-str"
                                                   ,"maxColumn = 55"
                                                   ]
+  _ <- addOracle $ \(HindentOptions _) -> return ["--line-length", "55"]
   _ <- addOracle $ \(DitaaOptions _) -> return ["--scale"
                                                ,"4"
                                                ,"--overwrite"
                                                ]
+  _ <- addOracle $ \(GraphvizOptions _) -> return ["-Tpng"
+                                                  ,"-Gdpi=300"
+                                                  ]
   return ()
 
 addProjectCompiler :: Rules (() -> Action ())
@@ -109,18 +120,25 @@ addProjectCompiler = do
   where bin = "sbt" :: String
         args = ["compile"] :: [String]
 
+includedFont :: FilePath
+includedFont = buildDir </> "font.tex"
+
+beamerThemes :: [FilePath]
+beamerThemes = map (buildDir </>) ["beamercolorthemecodecentric.sty"
+                                  ,"beamerfontthemecodecentric.sty"
+                                  ,"beamerinnerthemecodecentric.sty"
+                                  ,"beamerouterthemecodecentric.sty"
+                                  ,"beamerthemecodecentric.sty"
+                                  ]
+
 rules :: (() -> Action ()) -> Resource -> Rules ()
 rules projectCompiler downloadResource = do
+  --snippet:pdf rule
   buildDir </> "slides.pdf" %> \out -> do
     let inp = out -<.> "tex"
-        theme = map (buildDir </>) ["beamercolorthemecodecentric.sty"
-                                   ,"beamerfontthemecodecentric.sty"
-                                   ,"beamerinnerthemecodecentric.sty"
-                                   ,"beamerouterthemecodecentric.sty"
-                                   ,"beamerthemecodecentric.sty"
-                                   ]
-    need (inp : (buildDir </> "font.tex") : theme)
+    need (inp : includedFont : beamerThemes)
     latexmk inp
+  --end:pdf rule
 
   buildDir </> "font.tex" %> \_ -> dumpFontFile
 
@@ -128,8 +146,8 @@ rules projectCompiler downloadResource = do
     let inp = dropDirectory1 out
     needsCode <- codeDeps inp
     needsGraphics <- graphicDeps inp
-    need (needsCode ++ needsGraphics)
-    copyFileChanged inp out
+    need (inp : needsCode ++ needsGraphics)
+    liftIO (copyFile inp out)
 
   buildDir </> "*.sty" %> \out -> do
     copyFileChanged (dropDirectory1 out) out
@@ -141,10 +159,20 @@ rules projectCompiler downloadResource = do
     checkScala out
     scalafmt out
 
+  buildDir </> "snippets" </> "*.hs" %> \out -> do
+    snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
+    writeFileChanged out snip
+    hindent out
+
   buildDir </> "ditaa/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "ditaa"
     need [inp]
     ditaa inp out
+
+  buildDir </> "graphviz/*.png" %> \out -> do
+    let inp = dropDirectory1 out -<.> "dot"
+    need [inp]
+    graphviz inp out
 
   buildDir </> "static-images/*" %> \out -> do
     let inp = dropDirectory1 out
@@ -163,9 +191,15 @@ rules projectCompiler downloadResource = do
   [ buildDir </> "images/*" <.> ext | ext <- [ "jpg", "png", "gif" ] ] |%> \out -> do
     let inp = dropDirectory1 $ out -<.> "src"
     need [inp]
-    ImageSrc uri ts <- traced "image-src" (readImageSrc inp)
+    ImageSrc uri ts <- traced "image-src" (readDhall inp)
     download downloadResource (TS.unpack uri) out
     for_ ts $ unit . applyTransformation out
+
+graphviz :: FilePath -> FilePath -> Action ()
+graphviz inp out = do
+  opts <- askOracle (GraphvizOptions ())
+  cmd cmdOpts bin (opts ++ ["-o", out, inp])
+  where bin = "dot" :: String
 
 ditaa :: FilePath -> FilePath -> Action ()
 ditaa inp outp = do
@@ -185,6 +219,12 @@ checkScala inp = do
   opts <- askOracle (ScalaOptions ())
   cmd bin (opts ++ [inp])
   where bin = "scala" :: String
+
+hindent :: FilePath -> Action ()
+hindent inp = do
+  opts <- askOracle (HindentOptions ())
+  cmd bin (opts ++ [inp])
+  where bin = "hindent" :: String
 
 scalafmt :: FilePath -> Action ()
 scalafmt inp = do
@@ -230,28 +270,20 @@ graphicDeps file = map (buildDir </>) <$> commandDeps ["includegraphics"] file
 
 codeDeps :: FilePath -> Action [FilePath]
 codeDeps file = do
-  deps <- map (buildDir </>) . filter (not . (`elem` ["scala", "yaml"])) <$> commandDeps ["inputminted"] file
-  putQuiet ("Discovered dependencies for '" <> file <> "': " <> show deps)
+  deps <- map (buildDir </>) . filter (not . (`elem` ["scala", "yaml", "haskell"])) <$> commandDeps ["inputminted"] file
   return deps
 
 extractSnippet :: FilePath -> Action String
 extractSnippet file = do
   putQuiet ("Extracting from " <> file)
-  snippets <- filter ((==3) . length) . chunksOf 3 <$> readFileLines file
-  fmap concat . for snippets $ \ls -> do
-    unless (length ls == 3) $
-      error ("Error when reading snippet " ++ file
-          ++ " need exactly three lines but got " ++ show (length ls) ++ ":\n"
-          ++ intercalate "\n"
-                         (zipWith (\i line -> show i ++ ": " ++ line) [(1::Int)..] ls))
-    let [sourceFile,startString,endString] = ls
-    lns <- readFileLines sourceFile
-    let result = takeWhile (not . (endString `isPrefixOf`) . dropWhile (== ' '))
-               . dropWhile (not . (startString `isPrefixOf`) . dropWhile (== ' '))
-               $ lns
-    if null result
-      then error ("Empty snippet for:\n" <> file <> ":0:")
-      else return (unlines (drop 1 result))
+  SnippetSrc (T.unpack -> sourceFile) (T.unpack -> startString) (T.unpack -> endString) <- readDhall file
+  lns <- readFileLines sourceFile
+  let result = takeWhile (not . (endString `isPrefixOf`) . dropWhile (== ' '))
+             . dropWhile (not . (startString `isPrefixOf`) . dropWhile (== ' '))
+             $ lns
+  if null result
+    then error ("Empty snippet for:\n" <> file <> ":0:")
+    else return (unlines (drop 1 result))
 
 download :: Resource -> String -> FilePath -> Action ()
 download res uri target = withResource res 1 $ traced "download" $ do
@@ -259,8 +291,8 @@ download res uri target = withResource res 1 $ traced "download" $ do
   r <- Wreq.get uri
   BL.writeFile target (r ^. Wreq.responseBody)
 
-readImageSrc :: MonadIO io => String -> io ImageSrc
-readImageSrc p = liftIO $ D.input D.auto ("./" <> TL.pack p)
+readDhall :: (D.Interpret a, MonadIO m) => String -> m a
+readDhall p = liftIO $ D.input D.auto ("./" <> TL.pack p)
 
 applyTransformation :: String -> Text -> Action ()
 applyTransformation out t = cmd [Stdin ""] bin (words (TS.unpack t) ++ [out, out])

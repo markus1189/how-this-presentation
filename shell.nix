@@ -9,6 +9,7 @@ let
       bytestring
       dhall
       hlint
+      hindent
       HaTeX
       lens
       pandoc
