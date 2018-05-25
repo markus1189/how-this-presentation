@@ -270,8 +270,19 @@ pattern %> \out -> do
 
 \begin{frame}
   \frametitle{Snippet File}
+  \begin{itemize}
+  \item for snippet files we use Dhall
+  \item non-turing complete programming language for configuration
+  \end{itemize}
   \begin{center}
     \inputminted{text}{snippets/pdf-rule.snippet}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Rule}
+  \begin{center}
+    \inputminted[autogobble]{haskell}{snippets/haskell-snippet-rule.hs}
   \end{center}
 \end{frame}
 

@@ -72,10 +72,10 @@ runShakeBuild :: IO ()
 runShakeBuild = shakeArgs myShakeOptions $ do
   downloadResource <- addResource
   addOracles
-  projectCompiler <- addProjectCompiler
+  sbtCompile <- addProjectCompiler
   wantTargets
   phonyCommands
-  rules projectCompiler downloadResource
+  rules sbtCompile downloadResource
 
 wantTargets :: Rules ()
 wantTargets = do
@@ -135,7 +135,7 @@ createByCopy :: FilePath -> Rules ()
 createByCopy ptrn = buildDir </> ptrn %> \out -> copyFileChanged (dropDirectory1 out) out
 
 rules :: (() -> Action ()) -> Resource -> Rules ()
-rules projectCompiler downloadResource = do
+rules sbtCompile downloadResource = do
   --snippet:outer pdf rule
   --snippet:pdf rule
   buildDir </> "slides.pdf" %> \out -> do
@@ -157,16 +157,18 @@ rules projectCompiler downloadResource = do
   createByCopy "*.sty"
 
   buildDir </> "snippets" </> "*.scala" %> \out -> do
-    _ <- projectCompiler ()
+    _ <- sbtCompile ()
     snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
     writeFileChanged out snip
     checkScala out
     scalafmt out
 
+  --snippet:hs snippet rule
   buildDir </> "snippets" </> "*.hs" %> \out -> do
     snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
     writeFileChanged out snip
     hindent out
+  --end
 
   createByCopy ("snippets" </> "*.snippet")
 
