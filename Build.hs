@@ -152,6 +152,7 @@ rules sbtCompile downloadResource = do
     needsCode <- codeDeps inp
     needsGraphics <- graphicDeps inp
     need (inp : needsCode ++ needsGraphics)
+    chktex inp
     liftIO (copyFile inp out)
 
   createByCopy "*.sty"
@@ -163,12 +164,26 @@ rules sbtCompile downloadResource = do
     checkScala out
     scalafmt out
 
+  --snippet:outer hs snippet rule
   --snippet:hs snippet rule
   buildDir </> "snippets" </> "*.hs" %> \out -> do
     snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
-    writeFileChanged out snip
-    hindent out
+    withTempFile $ \temp -> do
+      liftIO (writeFile temp snip)
+      hlint temp
+      hindent temp
+      content <- liftIO (readFile temp)
+      writeFileChanged out content
   --end
+  --end:outer hs snippet rule
+
+  buildDir </> "snippets" </> "*.hs_noformat" %> \out -> do
+    snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
+    withTempFile $ \temp -> do
+      liftIO (writeFile temp snip)
+      hlint temp
+      content <- liftIO (readFile temp)
+      writeFileChanged out content
 
   createByCopy ("snippets" </> "*.snippet")
 
@@ -196,12 +211,26 @@ rules sbtCompile downloadResource = do
       let inp = dropDirectory1 out
       copyFileChanged inp out
 
+  --snippet:download-images
   [ buildDir </> "images/*" <.> ext | ext <- [ "jpg", "png", "gif" ] ] |%> \out -> do
     let inp = dropDirectory1 $ out -<.> "src"
     need [inp]
     ImageSrc uri ts <- traced "image-src" (readDhall inp)
     download downloadResource (TS.unpack uri) out
     for_ ts $ unit . applyTransformation out
+  --end
+
+  createByCopy "images/*.src"
+
+chktex :: FilePath -> Action ()
+chktex inp = do
+  cmd cmdOpts bin inp
+  where bin = "chktex" :: String
+
+hlint :: FilePath -> Action ()
+hlint inp = do
+  cmd cmdOpts bin inp
+  where bin = "hlint" :: String
 
 graphviz :: FilePath -> FilePath -> Action ()
 graphviz inp out = do
