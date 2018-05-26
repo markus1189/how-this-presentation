@@ -188,10 +188,16 @@ rules sbtCompile downloadResource = do
     need [inp]
     ditaa inp out
 
+  createByCopy "ditaa/*.ditaa"
+
+  --snippet:graphviz rule
   buildDir </> "graphviz/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "dot"
     need [inp]
     graphviz inp out
+  --end
+
+  createByCopy "graphviz/*.dot"
 
   buildDir </> "static-images/*" %> \out -> do
     let inp = dropDirectory1 out
