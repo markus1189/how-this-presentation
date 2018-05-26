@@ -5,7 +5,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 
 module Main where
@@ -115,10 +114,7 @@ addOracles = do
   return ()
 
 addProjectCompiler :: Rules (() -> Action ())
-addProjectCompiler = do
-  newCache $ \() -> cmd_ [Cwd "source-code"] bin args
-  where bin = "sbt" :: String
-        args = ["compile"] :: [String]
+addProjectCompiler = newCache $ \() -> cmd_ [Cwd "source-code"] "sbt" ["compile"]
 
 includedFont :: FilePath
 includedFont = buildDir </> "font.tex"
@@ -223,45 +219,37 @@ rules sbtCompile downloadResource = do
   createByCopy "images/*.src"
 
 chktex :: FilePath -> Action ()
-chktex inp = do
-  cmd cmdOpts bin inp
-  where bin = "chktex" :: String
+chktex inp = cmd cmdOpts "chktex" inp
 
 hlint :: FilePath -> Action ()
 hlint inp = do
-  cmd cmdOpts bin inp
-  where bin = "hlint" :: String
+  cmd cmdOpts "hlint" inp
 
 graphviz :: FilePath -> FilePath -> Action ()
 graphviz inp out = do
   opts <- askOracle (GraphvizOptions ())
-  cmd cmdOpts bin (opts ++ ["-o", out, inp])
-  where bin = "dot" :: String
+  cmd cmdOpts "dot" (opts ++ ["-o", out, inp])
 
 ditaa :: FilePath -> FilePath -> Action ()
 ditaa inp outp = do
   opts <- askOracle (DitaaOptions ())
-  cmd cmdOpts bin ([inp, outp] ++ opts)
-  where bin = "ditaa" :: String
+  cmd cmdOpts "ditaa" ([inp, outp] ++ opts)
 
 latexmk :: FilePath -> Action ()
 latexmk inp = do
   cmd (Cwd (takeDirectory inp) : cmdOpts)
-      bin
+      "latexmk"
       ["-g", "-shell-escape", "-pdfxe", dropDirectory1 inp]
-  where bin = "latexmk" :: String
 
 checkScala :: FilePath -> Action ()
 checkScala inp = do
   opts <- askOracle (ScalaOptions ())
-  cmd bin (opts ++ [inp])
-  where bin = "scala" :: String
+  cmd "scala" (opts ++ [inp])
 
 hindent :: FilePath -> Action ()
 hindent inp = do
   opts <- askOracle (HindentOptions ())
-  cmd bin (opts ++ [inp])
-  where bin = "hindent" :: String
+  cmd "hindent" (opts ++ [inp])
 
 scalafmt :: FilePath -> Action ()
 scalafmt inp = do
@@ -270,10 +258,9 @@ scalafmt inp = do
   withTempFile $ \temp -> do
     let wrapped = unlines $ "object ObjForScalafmt {" : lines contents ++ ["}"]
     liftIO $ IO.writeFile temp wrapped
-    Stdout stdout <- cmd [EchoStdout False, EchoStderr False] bin (opts ++ [temp])
+    Stdout stdout <- cmd [EchoStdout False, EchoStderr False] "scalafmt" (opts ++ [temp])
     let output = unlines (init (drop 1 (lines stdout)))
     liftIO $ IO.writeFile inp output
-  where bin = "scalafmt" :: String
 
 dumpFontFile :: Action ()
 dumpFontFile = do
@@ -326,8 +313,7 @@ download res uri target = withResource res 1 $ traced "download" $ do
   BL.writeFile target (r ^. Wreq.responseBody)
 
 readDhall :: (D.Interpret a, MonadIO m) => String -> m a
-readDhall p = liftIO $ D.input D.auto ("./" <> TL.pack p)
+readDhall p = liftIO $ D.input D.auto (TL.pack $ "./" <> p)
 
 applyTransformation :: String -> Text -> Action ()
-applyTransformation out t = cmd [Stdin ""] bin (words (TS.unpack t) ++ [out, out])
-  where bin = "convert" :: String
+applyTransformation out t = cmd [Stdin ""] "convert" (words (TS.unpack t) ++ [out, out])
