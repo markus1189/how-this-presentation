@@ -1,5 +1,4 @@
 #! /usr/bin/env nix-shell
--- #! nix-shell deps.nix -i "ghci -fdefer-type-errors"
 #! nix-shell shell.nix -i "runhaskell --ghc-arg=-threaded --ghc-arg=-Wall"
 #! nix-shell --pure
 {-# LANGUAGE TypeFamilies #-}
@@ -10,33 +9,37 @@
 module Main where
 
 import           Control.Lens.Operators ((^.))
-import           System.Directory (createDirectoryIfMissing, copyFile)
+import           Control.Monad (void)
+import           Control.Monad.IO.Class (MonadIO)
+import qualified Data.ByteString.Lazy as BL
 import           Data.Foldable (for_)
 import           Data.List (isPrefixOf)
 import           Data.Maybe (mapMaybe)
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
+import qualified Data.Text as TS
 import qualified Data.Text.Lazy as TL
 import           Development.Shake
 import           Development.Shake.Classes
 import           Development.Shake.FilePath
 import qualified Dhall as D
-import qualified Data.ByteString.Lazy as BL
-import           Control.Monad.IO.Class (MonadIO)
 import qualified Network.Wreq as Wreq
+import           System.Directory (createDirectoryIfMissing, copyFile)
 import qualified System.IO as IO
 import           Text.LaTeX
-import qualified Data.Text as TS
 import           Text.LaTeX.Base.Parser
 import           Text.LaTeX.Base.Syntax
 
 cmdOpts :: [CmdOption]
 cmdOpts = [WithStdout True, EchoStdout False, EchoStderr False, Stdin ""]
 
+data Addr = Start | Search { term :: Text} | End deriving (Show, D.Generic)
+instance D.Interpret Addr
+
 data ImageSrc = ImageSrc { url :: Text, transformations :: [Text] } deriving (Show, D.Generic)
 instance D.Interpret ImageSrc
 
-data SnippetSrc = SnippetSrc { snippetFile :: Text, snippetStart :: Text, snippetEnd :: Text } deriving (Show, D.Generic)
+data SnippetSrc = SnippetSrc { snippetFile :: Text, snippetStart :: Addr, snippetEnd :: Addr } deriving (Show, D.Generic)
 instance D.Interpret SnippetSrc
 
 newtype ScalaOptions = ScalaOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
@@ -155,10 +158,9 @@ rules sbtCompile downloadResource = do
 
   buildDir </> "snippets" </> "*.scala" %> \out -> do
     _ <- sbtCompile ()
-    snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
-    writeFileChanged out snip
-    checkScala out
-    scalafmt out
+    handleSnippet out $ \file -> do
+      checkScala file
+      scalafmt out
 
   --snippet:outer hs snippet rule
   --snippet:hs snippet rule
@@ -174,14 +176,18 @@ rules sbtCompile downloadResource = do
   --end:outer hs snippet rule
 
   buildDir </> "snippets" </> "*.hs_noformat" %> \out -> do
-    snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
+    handleSnippet out hlint
+
+  buildDir </> "snippets" </> "*.yml" %> \out -> do
+    handleSnippet out (void . return)
+
+  buildDir </> "snippets" </> "*.snippet" %> \out -> do
     withTempFile $ \temp -> do
-      liftIO (writeFile temp snip)
-      hlint temp
+      content <- liftIO (readFile (dropDirectory1 $ out))
+      liftIO (writeFile temp content)
+      dhallFormat temp
       content <- liftIO (readFile temp)
       writeFileChanged out content
-
-  createByCopy ("snippets" </> "*.snippet")
 
   buildDir </> "ditaa/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "ditaa"
@@ -223,6 +229,9 @@ rules sbtCompile downloadResource = do
   --end
 
   createByCopy "images/*.src"
+
+dhallFormat :: FilePath -> Action ()
+dhallFormat inp = cmd cmdOpts "dhall-format" ["--inplace", inp]
 
 chktex :: FilePath -> Action ()
 chktex inp = cmd cmdOpts "chktex" inp
@@ -303,14 +312,35 @@ codeDeps file = map (buildDir </>) . concatMap (drop 1) <$> commandDeps ["inputm
 extractSnippet :: FilePath -> Action String
 extractSnippet file = do
   putQuiet ("Extracting from " <> file)
-  SnippetSrc (T.unpack -> sourceFile) (T.unpack -> startString) (T.unpack -> endString) <- readDhall file
+  need [file]
+  SnippetSrc (T.unpack -> sourceFile) startSearch endSearch <- readDhall file
   lns <- readFileLines sourceFile
-  let result = takeWhile (not . (endString `isPrefixOf`) . dropWhile (== ' '))
-             . dropWhile (not . (startString `isPrefixOf`) . dropWhile (== ' '))
-             $ lns
+  let result = findSnippet startSearch endSearch lns
   if null result
     then error ("Empty snippet for:\n" <> file <> ":0:")
-    else return (unlines (drop 1 result))
+    else return (unlines result)
+
+findSnippet :: Addr -> Addr -> [String] -> [String]
+findSnippet (Search (T.unpack -> startString)) (Search (T.unpack -> endString)) lns =
+  drop 1
+  . takeWhile (not . (endString `isPrefixOf`) . dropWhile (== ' '))
+  . dropWhile (not . (startString `isPrefixOf`) . dropWhile (== ' '))
+  $ lns
+findSnippet (Search (T.unpack -> startString)) End lns =
+  drop 1 . dropWhile (not . (startString `isPrefixOf`) . dropWhile (== ' ')) $ lns
+findSnippet Start (Search (T.unpack -> endString)) lns =
+  takeWhile (not . (endString `isPrefixOf`) . dropWhile (== ' ')) lns
+findSnippet Start End lns = lns
+findSnippet s e _ = error $ "invalid combination of addresses: " ++ show (s,e)
+
+handleSnippet :: FilePath -> (FilePath -> Action ()) -> Action ()
+handleSnippet out act = do
+  snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
+  withTempFile $ \temp -> do
+    liftIO (writeFile temp snip)
+    act temp
+    content <- liftIO (readFile temp)
+    writeFileChanged out content
 
 download :: Resource -> String -> FilePath -> Action ()
 download res uri target = withResource res 1 $ traced "download" $ do

@@ -1,0 +1,4 @@
+{ snippetFile : Text
+, snippetStart : < Search : { term : Text} | End : {} | Start : {} >
+, snippetEnd : < Search : { term : Text} | End : {} | Start : {} >
+}

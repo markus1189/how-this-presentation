@@ -434,6 +434,26 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
+  \frametitle{Continuous Integration Madness}
+  \begin{itemize}
+  \item it's huge and a mess, good luck maintaining this
+  \item OS specific, your own setup vs travis
+  \item not reproducible at all
+  \item very brittle
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Continuous Integration Made Easy}
+  \inputminted{yaml}{snippets/travis.yml}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Executing Our Shake Build}
+  \inputminted[breaklines]{yaml}{snippets/build-shebang.hs}
+\end{frame}
+
+\begin{frame}
   \frametitle{The One Command Lie}
   \begin{itemize}
   \item you just have to run this \textbf{one} command
