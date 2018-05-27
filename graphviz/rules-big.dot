@@ -1,0 +1,17 @@
+digraph G {
+    "slides.pdf" -> "slides.tex" [ label = "compile" ];
+    "slides.pdf" -> "font.tex";
+    "slides.pdf" -> "theme.tex";
+
+    "slides.tex" -> "snippets/pdf-rule.hs" [ label = "check,format" ];
+    "snippets/pdf-rule.hs" -> "snippets/pdf-rule.snippet" [ label = "extract" ];
+
+    "slides.tex" -> "graphviz/rules.png";
+    "graphviz/rules.png" -> "graphviz/rules.dot" [label = "dot" ];
+
+    "slides.tex" -> "ditaa/flow.png";
+    "ditaa/flow.png" -> "ditaa/flow.ditaa" [label = "ditaa"];
+
+    "slides.tex" -> "images/image.jpg";
+    "images/image.jpg" -> "images/image.src" [label = "download"];
+}

@@ -182,12 +182,9 @@ rules sbtCompile downloadResource = do
     handleSnippet out (void . return)
 
   buildDir </> "snippets" </> "*.snippet" %> \out -> do
-    withTempFile $ \temp -> do
-      content <- liftIO (readFile (dropDirectory1 $ out))
-      liftIO (writeFile temp content)
-      dhallFormat temp
-      content <- liftIO (readFile temp)
-      writeFileChanged out content
+    let inp = dropDirectory1 out
+    formatted <- dhallFormat inp
+    writeFileChanged out formatted
 
   buildDir </> "ditaa/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "ditaa"
@@ -230,8 +227,10 @@ rules sbtCompile downloadResource = do
 
   createByCopy "images/*.src"
 
-dhallFormat :: FilePath -> Action ()
-dhallFormat inp = cmd cmdOpts "dhall-format" ["--inplace", inp]
+dhallFormat :: FilePath -> Action String
+dhallFormat inp = do
+  Stdout out <- cmd (FileStdin inp : cmdOpts) "dhall-format"
+  return out
 
 chktex :: FilePath -> Action ()
 chktex inp = cmd cmdOpts "chktex" inp

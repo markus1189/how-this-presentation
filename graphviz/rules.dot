@@ -1,6 +1,5 @@
 digraph G {
-    "slides.tex" -> "slides.pdf";
-
-    "font.tex" -> "slides.pdf";
-    "theme.tex" -> "slides.pdf";
+    "slides.pdf" -> "slides.tex";
+    "slides.pdf" -> "font.tex";
+    "slides.pdf" -> "theme.tex";
 }

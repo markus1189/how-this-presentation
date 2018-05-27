@@ -396,6 +396,24 @@ pattern %> \out -> do
   \inputminted{haskell}{snippets/graphviz-rule.hs}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Everything As A Rule}
+  \begin{center}
+    \includegraphics[width=\textwidth]{graphviz/rules-big.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Getting Dependencies}
+  \begin{itemize}
+  \item the missing piece: how to ``discover'' dependencies?
+  \item all of hackage is available
+  \item parse LaTeX via HaTeX (this time)
+  \item use the pandoc library
+  \item \ldots whatever you need
+  \end{itemize}
+\end{frame}
+
 \section{Continuous Integration}
 
 \begin{frame}
@@ -444,6 +462,26 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
+  \frametitle{The One Command Lie}
+  \begin{itemize}
+  \item you just have to run this \textbf{one} command
+  \item it's mostly a lie
+  \item with nix, you can \textit{actually} achieve that!
+  \item perfect: use it in ``.travis.yml'' as well as every pc
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Nix}
+  \begin{itemize}
+  \item \url{https://nixos.org/nix/}
+  \end{itemize}
+  \begin{quote}
+    Nix is a powerful package manager for Linux and other Unix systems that makes package management reliable and reproducible.
+  \end{quote}
+\end{frame}
+
+\begin{frame}
   \frametitle{Continuous Integration Made Easy}
   \inputminted{yaml}{snippets/travis.yml}
 \end{frame}
@@ -454,13 +492,7 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \frametitle{The One Command Lie}
-  \begin{itemize}
-  \item you just have to run this \textbf{one} command
-  \item it's mostly a lie
-  \item with nix, you can \textit{actually} achieve that!
-  \item perfect: use it in ``.travis.yml'' as well as every pc
-  \end{itemize}
+  \frametitle{Only LaTeX?}
 \end{frame}
 
 \section{Conclusion}\label{sec:conclusion}
