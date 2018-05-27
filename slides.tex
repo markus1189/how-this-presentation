@@ -79,67 +79,92 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Writing Presentation}
-  \begin{itemize}
-  \item quick and dirty: google slides, powerpoint, keynote
-  \item can't use version control like git
-  \item paste pictures
-  \item want to change something? awful
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
   \frametitle{Used Tools}
   \begin{itemize}
   \item Nix for system dependencies + build env
   \item Shake to write a custom build system
-  \item Dhall for easy configuration
+  \item Dhall for ``configuration''
   \item LaTeX for slides
   \item ditaa, graphviz
-  \item more\ldots
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Presentations}
+  \frametitle{Wish List}
   \begin{itemize}
-  \item having CI would be nice!
-  \item ``just'' check out from github and build it?
-  \item good luck with that!
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Pain Points}
-  \begin{itemize}
-  \item you have to setup LaTeX
-  \item plus all required packages (most of the time: \textbf{all})
-  \item hope that everything is up to date and try to build it
-  \item notice missing fonts, try to find them somewhere
-  \item notice missing python package (pygments), install it
-  \item lots of trial and error
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Presentation As Code}
-  \begin{itemize}
+  \item version control: use git to track changes
   \item reproducible: same description for CI and local machine
-  \item single step: one command
+  \item single step: \textbf{one} command to build presentation
   \item declarative: generate from description
   \item checked: source code compiles
+  \item minimal: only re-build what changed
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Aspects Of A Typical Presentation}
+  \begin{center}
+  \resizebox{0.7\textwidth}{!}{
+  \begin{tikzpicture}
+  \path[small mindmap, concept color=beamer@codeblue,
+  level 1 concept/.append style={every child/.style={concept color=beamer@centricgreen}},
+  level 2 concept/.append style={every child/.style={concept color=beamer@centricgreen!50}}
+  ]
+  node[concept] {Presentation}
+  [clockwise from=0]
+  child {
+    node[concept] {Images}
+    [clockwise from=90]
+    child { node[concept] (algo) {Download} }
+    child { node[concept] {graphviz} }
+    child { node[concept] {ditaa} }
+    child { node[concept] {plantuml} }
+  }
+  child {
+    node[concept] {Code}
+    [clockwise from=-90]
+    child { node[concept] {Extract} }
+    child { node[concept] {Inline} }
+  }
+  child {
+    node[concept] {Build}
+    [clockwise from=-135]
+    child { node[concept] {PDF} }
+    child { node[concept] {Depen-\\dencies} }
+    child { node[concept] {CI} }
+  }
+  child {
+    node[concept] {Tools}
+    [clockwise from=135]
+    child { node[concept] {Dhall} }
+    child { node[concept] {Shake} }
+    child { node[concept] {Nix} }
+  }
+
+  % node [annotation, xshift=-2cm, yshift=-5mm] (annot) at (theo.south) {
+  %   \setsansfont{Caveat} \large This is an annotation }
+  % node [annotation, xshift=1cm, yshift=15mm] (annot2) at (algo.north) {
+  %   \setsansfont{Caveat} \large This is another annotation }
+  ;
+
+%   \begin{pgfonlayer}{background}
+%     \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot) edge (theo);
+%     \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot2) edge (algo);
+%   \end{pgfonlayer}
+\end{tikzpicture}
+}
+  \end{center}
 \end{frame}
 
 \begin{frame}
   \frametitle{Scenarios}
   \begin{itemize}
   \item Nix, Shake and Dhall
-  \item Scenario 1: Dependencies
-  \item Scenario 2a: Editing Code
-  \item Scenario 2b: Checking Snippets
-  \item Scenario 3: Generated Pictures
-  \item Scenario 4: Continuous Integration
+  \item Scenario 1a: Editing Code
+  \item Scenario 1b: Checking Snippets
+  \item Scenario 2a: Downloaded Pictures
+  \item Scenario 2b: Generated Pictures
+  \item Scenario 3: Continuous Integration
   \end{itemize}
 \end{frame}
 
