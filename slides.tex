@@ -339,20 +339,6 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \frametitle{Snippet Rule \textemdash{} Broken Formatting}
-  \begin{center}
-    \inputminted[autogobble, highlightlines={3}]{haskell}{snippets/outer-haskell-snippet-rule.hs_noformat}
-  \end{center}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Snippet Rule \textemdash{} After Auto-Formatting}
-  \begin{center}
-    \inputminted[autogobble, highlightlines={2-4}]{haskell}{snippets/haskell-snippet-rule.hs}
-  \end{center}
-\end{frame}
-
-\begin{frame}
   \frametitle{Extracting Code}
   \begin{itemize}
   \item will always be up to date with the compiling source (yay)
@@ -391,10 +377,17 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \frametitle{Formatting Code}
-  \begin{itemize}
-  \item example of code:
-  \end{itemize}
+  \frametitle{Snippet Rule \textemdash{} Broken Formatting}
+  \begin{center}
+    \inputminted[autogobble, highlightlines={3}]{haskell}{snippets/outer-haskell-snippet-rule.hs_noformat}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Rule \textemdash{} After Auto-Formatting}
+  \begin{center}
+    \inputminted[autogobble, highlightlines={2-4}]{haskell}{snippets/haskell-snippet-rule.hs}
+  \end{center}
 \end{frame}
 
 \section{Pictures}
@@ -420,6 +413,13 @@ pattern %> \out -> do
 
 \begin{frame}
   \frametitle{Downloading Pictures}
+  \begin{center}
+    \includegraphics{images/maintain-make.jpg}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Downloading Pictures}
   \begin{itemize}
   \item use Haskell and Shake to download on demand
   \item download of the file from the internet
@@ -431,13 +431,7 @@ pattern %> \out -> do
 \begin{frame}
   \frametitle{Downloading Pictures}
   \begin{center}
-    \includegraphics{images/maintain-make.jpg}
-  \end{center}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Downloading Pictures}
-    \begin{center}
+    \includegraphics[width=0.4\textwidth]{images/maintain-make.jpg}
     \inputminted{text}{images/maintain-make.src}
   \end{center}
 \end{frame}

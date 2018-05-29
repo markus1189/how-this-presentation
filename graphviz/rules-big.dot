@@ -1,4 +1,7 @@
 digraph G {
+    "want" [shape=box];
+
+    "want" -> "slides.pdf";
     "slides.pdf" -> "slides.tex" [ label = "compile" ];
     "slides.pdf" -> "font.tex";
     "slides.pdf" -> "theme.tex";
