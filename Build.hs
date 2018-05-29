@@ -249,11 +249,12 @@ ditaa inp outp = do
   opts <- askOracle (DitaaOptions ())
   cmd cmdOpts "ditaa" ([inp, outp] ++ opts)
 
+--snippet:latexmk rule
 latexmk :: FilePath -> Action ()
-latexmk inp = do
-  cmd (Cwd (takeDirectory inp) : cmdOpts)
-      "latexmk"
-      ["-g", "-shell-escape", "-pdfxe", dropDirectory1 inp]
+latexmk inp = cmd (Cwd (takeDirectory inp) : cmdOpts)
+              "latexmk"
+              ["-g", "-shell-escape", "-pdfxe", dropDirectory1 inp]
+--end
 
 checkScala :: FilePath -> Action ()
 checkScala inp = do

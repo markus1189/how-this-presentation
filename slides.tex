@@ -31,13 +31,64 @@
 \title{How This Presentation Was Made}
 \author{Markus Hauck @markus1189}
 
-\newcommand{\recipe}{%
-  \begin{itemize}
-  \item AST
-  \item \texttt{inject}
-  \item interpreter
-  \item check laws
-  \end{itemize}
+\newcommand{\overview}{%
+    \begin{center}
+  \resizebox{0.7\textwidth}{!}{
+  \begin{tikzpicture}
+  \path[small mindmap, concept color=beamer@codeblue,
+  level 1 concept/.append style={every child/.style={concept color=beamer@centricgreen}},
+  level 2 concept/.append style={every child/.style={concept color=beamer@centricgreen!50}}
+  ]
+  node[concept] {Presentation}
+  [clockwise from=0]
+  child {
+    node[concept] (images) {Images}
+    [clockwise from=90]
+    child { node[concept] (algo) {Download} }
+    child { node[concept] {graphviz} }
+    child { node[concept] {ditaa} }
+    child { node[concept] {plantuml} }
+  }
+  child {
+    node[concept] (code) {Code}
+    [clockwise from=-90]
+    child { node[concept] {Extract} }
+    child { node[concept] {Inline} }
+  }
+  child {
+    node[concept] (build) {Build}
+    [clockwise from=-120]
+    child { node[concept] {PDF} }
+    child { node[concept] {Depen-\\dencies} }
+    child { node[concept] {CI} }
+  }
+  child {
+    node[concept] (tools) {Tools}
+    [clockwise from=135]
+    child { node[concept] {Dhall} }
+    child { node[concept] {Shake} }
+    child { node[concept] {Nix} }
+  }
+
+  node [annotation, xshift=2cm, yshift=-10mm] (annot) at (code.east) {
+    \setsansfont{Caveat} \large Should compile }
+  node [annotation, xshift=2cm, yshift=-10mm] (annot2) at (build.east) {
+    \setsansfont{Caveat} \large Simple }
+  node [annotation, xshift=-10mm, yshift=8mm] (annot3) at (images.north) {
+    \setsansfont{Caveat} \large Generated}
+  node [annotation] (annot4) at (tools.west) { % TODO
+    \setsansfont{Caveat} \large Fun}
+  ;
+
+  \begin{pgfonlayer}{background}
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot) edge (code);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot2) edge (build);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot3) edge (images);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot4) edge (tools);
+  \end{pgfonlayer}
+\end{tikzpicture}
+}
+  \end{center}
 }
 
 % The presentation content
@@ -57,13 +108,12 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Presentations: But How}
+  \frametitle{Some Problems}
   \begin{itemize}
   \item powerpoint/keynote/google slides/\ldots{}
   \item but you can't use \texttt{git}
-  \item requirement: some markup language-ish thing
-  \item e.g., pandoc / LaTeX
-  \item text handled, what about pictures/code/etc?
+  \item pandoc / LaTeX / \ldots{}
+  \item how to include code and pictures?
   \end{itemize}
 \end{frame}
 
@@ -79,7 +129,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Used Tools}
+  \frametitle{Used Tools Overview}
   \begin{itemize}
   \item Nix for system dependencies + build env
   \item Shake to write a custom build system
@@ -102,91 +152,29 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Aspects Of A Typical Presentation}
-  \begin{center}
-  \resizebox{0.7\textwidth}{!}{
-  \begin{tikzpicture}
-  \path[small mindmap, concept color=beamer@codeblue,
-  level 1 concept/.append style={every child/.style={concept color=beamer@centricgreen}},
-  level 2 concept/.append style={every child/.style={concept color=beamer@centricgreen!50}}
-  ]
-  node[concept] {Presentation}
-  [clockwise from=0]
-  child {
-    node[concept] {Images}
-    [clockwise from=90]
-    child { node[concept] (algo) {Download} }
-    child { node[concept] {graphviz} }
-    child { node[concept] {ditaa} }
-    child { node[concept] {plantuml} }
-  }
-  child {
-    node[concept] {Code}
-    [clockwise from=-90]
-    child { node[concept] {Extract} }
-    child { node[concept] {Inline} }
-  }
-  child {
-    node[concept] {Build}
-    [clockwise from=-135]
-    child { node[concept] {PDF} }
-    child { node[concept] {Depen-\\dencies} }
-    child { node[concept] {CI} }
-  }
-  child {
-    node[concept] {Tools}
-    [clockwise from=135]
-    child { node[concept] {Dhall} }
-    child { node[concept] {Shake} }
-    child { node[concept] {Nix} }
-  }
-
-  % node [annotation, xshift=-2cm, yshift=-5mm] (annot) at (theo.south) {
-  %   \setsansfont{Caveat} \large This is an annotation }
-  % node [annotation, xshift=1cm, yshift=15mm] (annot2) at (algo.north) {
-  %   \setsansfont{Caveat} \large This is another annotation }
-  ;
-
-%   \begin{pgfonlayer}{background}
-%     \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot) edge (theo);
-%     \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot2) edge (algo);
-%   \end{pgfonlayer}
-\end{tikzpicture}
-}
-  \end{center}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Scenarios}
-  \begin{itemize}
-  \item Nix, Shake and Dhall
-  \item Scenario 1a: Editing Code
-  \item Scenario 1b: Checking Snippets
-  \item Scenario 2a: Downloaded Pictures
-  \item Scenario 2b: Generated Pictures
-  \item Scenario 3: Continuous Integration
-  \end{itemize}
+  \frametitle{Overview}
+  \overview{}
 \end{frame}
 
 \section{Shake}
 
 \begin{frame}
-  \frametitle{Shake}
+  \frametitle{Tool: Shake}
   \begin{itemize}
   \item \url{shakebuild.com/manual}
   \item Shake is a Haskell \textbf{library} for writing build systems
+  \item ``just'' a library, rest is up to you
   \item \texttt{Shake} vs \texttt{make} is like \texttt{Monad} vs \texttt{Applicative}
   \item integrates well with other libraries and system tools
-  \item the backbone of this presentation
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Shake}
+  \frametitle{Shake \textemdash{} Usage}
   \begin{itemize}
   \item specify rules to create output from some input
   \item avoid rebuilds of unchanged things
-  \item ``just'' a library, rest is up to you
+  \item call the shake build from your \texttt{main}
   \end{itemize}
 \end{frame}
 
@@ -217,6 +205,7 @@ pattern %> \out -> do
 \begin{frame}[fragile]
   \frametitle{Shake Rules}
   \inputminted[autogobble]{haskell}{snippets/pdf-rule.hs}
+  \inputminted[autogobble]{haskell}{snippets/latexmk-rule.hs}
 \end{frame}
 
 \begin{frame}
@@ -227,21 +216,33 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
+  \frametitle{Shake}
+  \begin{itemize}
+  \item general idea: express any dependencies via Shake rules
+  \item let shake figure out what needs rebuilding
+  \item next up: source code
+  \end{itemize}
+\end{frame}
+
+\section{Source Code}
+
+\begin{frame}
   \frametitle{Editing Code}
   \begin{itemize}
-  \item Step 1: Implement your code in a Scala project
+  \item Step 1: Implement your code in a normal project
   \item Step 2: Wild Copy And Paste Into Presentation
   \item Step 3: Reformat To Fit Slide
   \item Step 4: Change Original Source Code
   \item Step 5: Wild Editing Of Code on Slides
-  \item Step 6: Being suspicious that something is broken (optional)
+  \item Step 6: Notice something doesn't make sense
   \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
   \frametitle{Extract Code}
   \begin{itemize}
-  \item common: extract based on lines
+  \item totally broken: copy \& paste
+  \item little better: extract based on lines
   \item after edit / formatting / \ldots they change
   \item not what we want
   \end{itemize}
@@ -274,7 +275,25 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \frametitle{Snippet File}
+  \frametitle{Intermezzo: Dhall}
+  \begin{quote}
+    A configuration language guaranteed to terminate
+  \end{quote}
+  \begin{itemize}
+  \item think: lambda calculus for config
+  \item not turing-complete on purpose
+  \item subset can be converted to JSON and YAML
+  \item can be mapped directly into Haskell types
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Dhall Example}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Files}
   \begin{itemize}
   \item for snippet files we use Dhall
   \item non-turing complete programming language for configuration
@@ -287,14 +306,14 @@ pattern %> \out -> do
 \begin{frame}
   \frametitle{Snippet Rule \textemdash{} Broken Formatting}
   \begin{center}
-    \inputminted[autogobble]{haskell}{snippets/outer-haskell-snippet-rule.hs_noformat}
+    \inputminted[autogobble, highlightlines={3}]{haskell}{snippets/outer-haskell-snippet-rule.hs_noformat}
   \end{center}
 \end{frame}
 
 \begin{frame}
   \frametitle{Snippet Rule \textemdash{} After Auto-Formatting}
   \begin{center}
-    \inputminted[autogobble]{haskell}{snippets/haskell-snippet-rule.hs}
+    \inputminted[autogobble, highlightlines={2-4}]{haskell}{snippets/haskell-snippet-rule.hs}
   \end{center}
 \end{frame}
 
@@ -548,7 +567,7 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
-  \tableofcontents{}
+  \overview{}
 \end{frame}
 
 \appendix{}
