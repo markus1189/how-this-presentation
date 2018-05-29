@@ -289,15 +289,50 @@ pattern %> \out -> do
 
 \begin{frame}
   \frametitle{Dhall Example}
-
+  \inputminted[autogobble]{haskell}{dhall/example.dhall}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Snippet Files}
+  \frametitle{Dhall Features}
   \begin{itemize}
-  \item for snippet files we use Dhall
-  \item non-turing complete programming language for configuration
+  \item booleans/integer/naturals
+  \item optional values
+  \item lists
+  \item records
+  \item functions
+  \item strings + interpolation
+  \item unions
+  \item imports
+  \item \ldots{}
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Dhall To JSON}
+  \inputminted[autogobble]{json}{dhall/example.json}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Dhall To YAML}
+  \inputminted[autogobble]{yaml}{dhall/example.yaml}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Files \textemdash{} Type}
+  \begin{center}
+    \inputminted{text}{snippets/snippet-type.dhall}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Files \textemdash{} Example}
+  \begin{center}
+    \inputminted{text}{snippets/snippet-type.snippet}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Files \textemdash{} Example}
   \begin{center}
     \inputminted{text}{snippets/pdf-rule.snippet}
   \end{center}

@@ -156,35 +156,42 @@ rules sbtCompile downloadResource = do
 
   createByCopy "*.sty"
 
-  buildDir </> "snippets" </> "*.scala" %> \out -> do
-    _ <- sbtCompile ()
-    handleSnippet out $ \file -> do
-      checkScala file
-      scalafmt out
+  alternatives $ do
 
-  --snippet:outer hs snippet rule
-  --snippet:hs snippet rule
-  buildDir </> "snippets" </> "*.hs" %> \out -> do
-    snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
-    withTempFile $ \temp -> do
-      liftIO (writeFile temp snip)
-      hlint temp
-      hindent temp
-      content <- liftIO (readFile temp)
-      writeFileChanged out content
-  --end
-  --end:outer hs snippet rule
+    buildDir </> "snippets" </> "*.scala" %> \out -> do
+      _ <- sbtCompile ()
+      handleSnippet out $ \file -> do
+        checkScala file
+        scalafmt out
 
-  buildDir </> "snippets" </> "*.hs_noformat" %> \out -> do
-    handleSnippet out hlint
+    --snippet:outer hs snippet rule
+    --snippet:hs snippet rule
+    buildDir </> "snippets" </> "*.hs" %> \out -> do
+      snip <- extractSnippet (dropDirectory1 $ out -<.> "snippet")
+      withTempFile $ \temp -> do
+        liftIO (writeFile temp snip)
+        hlint temp
+        hindent temp
+        content <- liftIO (readFile temp)
+        writeFileChanged out content
+    --end
+    --end:outer hs snippet rule
 
-  buildDir </> "snippets" </> "*.yml" %> \out -> do
-    handleSnippet out (void . return)
+    buildDir </> "snippets" </> "*.hs_noformat" %> \out -> do
+      handleSnippet out hlint
 
-  buildDir </> "snippets" </> "*.snippet" %> \out -> do
-    let inp = dropDirectory1 out
-    formatted <- dhallFormat inp
-    writeFileChanged out formatted
+    buildDir </> "snippets" </> "*.yml" %> \out -> do
+      handleSnippet out (void . return)
+
+    buildDir </> "snippets" </> "*.snippet" %> \out -> do
+      let inp = dropDirectory1 out
+      formatted <- dhallFormat inp
+      writeFileChanged out formatted
+
+    buildDir </> "snippets" </> "*" %> \out -> do
+      handleSnippet out $ \file -> do
+        formatted <- dhallFormat file
+        writeFileChanged out formatted
 
   buildDir </> "ditaa/*.png" %> \out -> do
     let inp = dropDirectory1 out -<.> "ditaa"
@@ -192,6 +199,19 @@ rules sbtCompile downloadResource = do
     ditaa inp out
 
   createByCopy "ditaa/*.ditaa"
+
+  createByCopy "dhall/*.dhall"
+
+  buildDir </> "dhall/*.json" %> \out -> do
+    let inp = dropDirectory1 out -<.> "dhall"
+    json <- dhallToJson inp
+    result <- jqPretty json
+    writeFileChanged out result
+
+  buildDir </> "dhall/*.yaml" %> \out -> do
+    let inp = dropDirectory1 out -<.> "dhall"
+    yaml <- dhallToYaml inp
+    writeFileChanged out yaml
 
   --snippet:graphviz rule
   buildDir </> "graphviz/*.png" %> \out -> do
@@ -230,6 +250,21 @@ rules sbtCompile downloadResource = do
 dhallFormat :: FilePath -> Action String
 dhallFormat inp = do
   Stdout out <- cmd (FileStdin inp : cmdOpts) "dhall-format"
+  return out
+
+jqPretty :: String -> Action String
+jqPretty inp = do
+  Stdout out <- cmd (Stdin inp : cmdOpts) "jq" ["."]
+  return out
+
+dhallToJson :: FilePath -> Action String
+dhallToJson inp = do
+  Stdout out <- cmd (FileStdin inp : cmdOpts) "dhall-to-json"
+  return out
+
+dhallToYaml :: FilePath -> Action String
+dhallToYaml inp = do
+  Stdout out <- cmd (FileStdin inp : cmdOpts) "dhall-to-yaml"
   return out
 
 chktex :: FilePath -> Action ()

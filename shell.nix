@@ -61,12 +61,14 @@ in
 
     buildInputs = [
       coreutils
+      dhall-json
       ditaa
       fontconfig
       eject
       ghcPackages
       graphviz
       imagemagick
+      jq
       latexPackages
       sbt
       scalafmt
