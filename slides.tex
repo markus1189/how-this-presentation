@@ -70,21 +70,17 @@
     child { node[concept] {Nix} }
   }
 
-  node [annotation, xshift=2cm, yshift=-10mm] (annot) at (code.east) {
-    \setsansfont{Caveat} \large Should compile }
-  node [annotation, xshift=2cm, yshift=-10mm] (annot2) at (build.east) {
-    \setsansfont{Caveat} \large Simple }
-  node [annotation, xshift=-10mm, yshift=8mm] (annot3) at (images.north) {
-    \setsansfont{Caveat} \large Generated}
-  node [annotation] (annot4) at (tools.west) { % TODO
-    \setsansfont{Caveat} \large Fun}
+  node [annotation, xshift=2cm, yshift=-10mm] (annot) at (code.east) {\setsansfont{Caveat} \large Should compile }
+  node [annotation, xshift=2cm, yshift=-10mm] (annot2) at (build.east) {\setsansfont{Caveat} \large Simple }
+  node [annotation, xshift=-10mm, yshift=8mm] (annot3) at (images.north) {\setsansfont{Caveat} \large Generated}
+  node [annotation] (annot4) at (tools.west) {\setsansfont{Caveat} \large Fun}
   ;
 
   \begin{pgfonlayer}{background}
-    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot) edge (code);
-    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot2) edge (build);
-    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot3) edge (images);
-    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot4) edge (tools);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot) -- (code);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (annot2) -- (build);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (1.8,1.5) -- (images);
+    \draw[draw=black, thick, shorten <=1mm, shorten >=1mm, -{Stealth[length=3mm, open, round]}] (-3.7,2) -- (tools);
   \end{pgfonlayer}
 \end{tikzpicture}
 }
