@@ -172,6 +172,9 @@
   \item avoid rebuilds of unchanged things
   \item call the shake build from your \texttt{main}
   \end{itemize}
+  \begin{center}
+    \inputminted[autogobble]{haskell}{snippets/shake-main.hs}
+  \end{center}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -216,7 +219,17 @@ pattern %> \out -> do
   \begin{itemize}
   \item general idea: express any dependencies via Shake rules
   \item let shake figure out what needs rebuilding
-  \item next up: source code
+  \item ensures minimal rebuilds
+  \item you don't have to worry
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Shake}
+  \begin{itemize}
+  \item quick status: use haskell library shake
+  \item get a ``build system'' for your presentation
+  \item next: source code
   \end{itemize}
 \end{frame}
 
@@ -238,7 +251,7 @@ pattern %> \out -> do
   \frametitle{Extract Code}
   \begin{itemize}
   \item totally broken: copy \& paste
-  \item little better: extract based on lines
+  \item little better: extract based on lines, still bad
   \item after edit / formatting / \ldots they change
   \item not what we want
   \end{itemize}
@@ -279,6 +292,7 @@ pattern %> \out -> do
   \item think: lambda calculus for config
   \item not turing-complete on purpose
   \item subset can be converted to JSON and YAML
+  \item has \textbf{types}!!!11
   \item can be mapped directly into Haskell types
   \end{itemize}
 \end{frame}
@@ -321,6 +335,11 @@ pattern %> \out -> do
 \end{frame}
 
 \begin{frame}
+  \frametitle{Snippet Files \textemdash{} Haskell}
+  \inputminted{haskell}{snippets/haskell-snippet-type.hs}
+\end{frame}
+
+\begin{frame}
   \frametitle{Snippet Files \textemdash{} Example}
   \begin{center}
     \inputminted{text}{snippets/snippet-type.snippet}
@@ -332,6 +351,11 @@ pattern %> \out -> do
   \begin{center}
     \inputminted{text}{snippets/pdf-rule.snippet}
   \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Snippet Files \textemdash{} Extraction}
+  \inputminted{haskell}{snippets/extraction.hs}
 \end{frame}
 
 \begin{frame}
@@ -384,6 +408,17 @@ pattern %> \out -> do
   \begin{center}
     \inputminted[autogobble, highlightlines={2-4}]{haskell}{snippets/haskell-snippet-rule.hs}
   \end{center}
+\end{frame}
+
+\begin{frame}
+  \frame{Snippets \textemdash{} Summary}
+  \begin{itemize}
+  \item automatic snippet extraction, robust
+  \item snippets compile
+  \item snippets are formatted
+  \item no worries over broken code
+  \item confidence in examples
+  \end{itemize}
 \end{frame}
 
 \section{Pictures}
@@ -483,6 +518,11 @@ pattern %> \out -> do
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Extraction from LaTeX}
+  \inputminted{haskell}{snippets/parse-latex.hs}
+\end{frame}
+
 \section{Continuous Integration}
 
 \begin{frame}
@@ -558,6 +598,11 @@ pattern %> \out -> do
 \begin{frame}
   \frametitle{Executing Our Shake Build}
   \inputminted[breaklines]{yaml}{snippets/build-shebang.hs}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Nix File (Simplified)}
+  \inputminted{nix}{static-source/simple-shell.nix}
 \end{frame}
 
 \section{Conclusion}\label{sec:conclusion}

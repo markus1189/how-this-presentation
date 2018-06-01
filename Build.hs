@@ -39,8 +39,10 @@ instance D.Interpret Addr
 data ImageSrc = ImageSrc { url :: Text, transformations :: [Text] } deriving (Show, D.Generic)
 instance D.Interpret ImageSrc
 
+--snippet:haskell snippet type
 data SnippetSrc = SnippetSrc { snippetFile :: Text, snippetStart :: Addr, snippetEnd :: Addr } deriving (Show, D.Generic)
 instance D.Interpret SnippetSrc
+--end
 
 newtype ScalaOptions = ScalaOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
 type instance RuleResult ScalaOptions = [String]
@@ -56,6 +58,11 @@ type instance RuleResult DitaaOptions = [String]
 
 newtype GraphvizOptions = GraphvizOptions () deriving (Show,Typeable,Eq,Hashable,Binary,NFData)
 type instance RuleResult GraphvizOptions = [String]
+
+--snippet:shake main
+theMain :: IO ()
+theMain = shakeArgs shakeOptions (want [buildDir </> "slides.pdf"])
+--end
 
 main :: IO ()
 main = runShakeBuild
@@ -326,17 +333,18 @@ cmdArgs :: TeXArg -> Maybe Text
 cmdArgs (FixArg (TeXRaw arg)) = Just arg
 cmdArgs _ = Nothing
 
+--snippet:parse latex
 commandDeps :: [String] -> FilePath -> Action [[FilePath]]
 commandDeps cmds file = do
   etex <- liftIO (parseLaTeXFile file)
   case etex of
     Left err -> error ("Parsing of file " <> file <> " failed: " <> show err)
     Right t -> do
-      let result = map (map T.unpack . mapMaybe cmdArgs) .
-                   map snd .
+      let result = map (map T.unpack . mapMaybe cmdArgs . snd) .
                    matchCommand (`elem` cmds) $
                    t
       return result
+--end
 
 graphicDeps :: FilePath -> Action [FilePath]
 graphicDeps file = map ((buildDir </>) . concat) <$> commandDeps ["includegraphics"] file
@@ -344,6 +352,7 @@ graphicDeps file = map ((buildDir </>) . concat) <$> commandDeps ["includegraphi
 codeDeps :: FilePath -> Action [FilePath]
 codeDeps file = map (buildDir </>) . concatMap (drop 1) <$> commandDeps ["inputminted"] file
 
+--snippet:extraction
 extractSnippet :: FilePath -> Action String
 extractSnippet file = do
   putQuiet ("Extracting from " <> file)
@@ -354,6 +363,7 @@ extractSnippet file = do
   if null result
     then error ("Empty snippet for:\n" <> file <> ":0:")
     else return (unlines result)
+--end
 
 findSnippet :: Addr -> Addr -> [String] -> [String]
 findSnippet (Search (T.unpack -> startString)) (Search (T.unpack -> endString)) lns =

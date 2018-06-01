@@ -4,6 +4,7 @@
 
 let
   codecentricFont = import ./cc-font.nix { inherit pkgs; };
+  #snippet:ghc packages
   ghcPackages = ghc.withPackages (p: with p;
     [
       bytestring
@@ -19,6 +20,7 @@ let
       wreq
     ]
   );
+  #end
   latexPackages = texlive.combine {
     inherit (texlive)
     animate
@@ -54,9 +56,11 @@ let
     xstring
     ;
   };
+  #snippet:python packages
   pyPackages = with pythonPackages; [ pygments pillow ];
+  #end
 in
-  runCommand "slides-build-input" {
+  mkShell {
     FONTCONFIG_FILE = makeFontsConf { fontDirectories = [ google-fonts ubuntu_font_family ] ++ (if useCodecentricFont then [codecentricFont] else []); };
 
     buildInputs = [
@@ -78,4 +82,4 @@ in
     ] ++ pyPackages;
 
     USE_CC_FONT = lib.boolToString useCodecentricFont;
-  } ""
+  }
